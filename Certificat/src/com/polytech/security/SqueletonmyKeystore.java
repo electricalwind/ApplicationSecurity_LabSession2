@@ -12,7 +12,7 @@ import java.io.*;
 public class SqueletonmyKeystore{
 
 	static public void main(String argv[]){
-		
+        if(argv.length==3){
 		try{
 		
 		// create a keystore with "JKS"
@@ -23,7 +23,7 @@ public class SqueletonmyKeystore{
 
             java.io.FileInputStream fis = null;
             try {
-                fis = new java.io.FileInputStream("/Users/matthieujimenez/Documents/APP/ApplicationSecurity_LabSession2/Certificat/src/com/polytech/security/commandline/myKeyStore.jks");
+                fis = new java.io.FileInputStream(argv[0]);
                 ks.load(fis, password);
             } finally {
                 if (fis != null) {
@@ -31,16 +31,16 @@ public class SqueletonmyKeystore{
                 }
             }
 		// checks if the key store contains your alias		
-		boolean trouve=ks.containsAlias("matthieu");
+		boolean trouve=ks.containsAlias(argv[1]);
 		// get the certificate associated to your alias
 		if (trouve){
-            Certificate mat=ks.getCertificate("matthieu");
+            Certificate mat=ks.getCertificate(argv[1]);
             // display it
             System.out.println(mat.toString());
             // retreive the public key of the certificate
             PublicKey pkmat=mat.getPublicKey();
             // retreive the alias private key from the keystore
-            PrivateKey pk= (PrivateKey)ks.getKey("matthieu","matthieu".toCharArray());
+            PrivateKey pk= (PrivateKey)ks.getKey(argv[1],argv[2].toCharArray());
             Signature signingEngine = Signature.getInstance("DSA");
 
             SignedObject so = new SignedObject("ma signature",pk,
@@ -53,24 +53,16 @@ public class SqueletonmyKeystore{
                     System.out.println(myobj);
                 } catch (java.lang.ClassNotFoundException e) {};
         }
-
-
-
-                 
-		// getInstance of a signObject 
-		// create a signedObject with 
-			// an instance of test
-			// the private key 
-			// the signingEngine
- 		
- 		// verify the signature
-		// display the result of the verification
 		
 		}catch(Exception e){System.out.println("error");}
 		
 		
 	}
-	
+
+    else{
+        System.out.println("java SqueletonmyKeyStore pathToJKS alias password");
+    }
+    }
 	static private class test implements Serializable{
 
 	 // nothing
