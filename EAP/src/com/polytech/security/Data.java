@@ -27,4 +27,7 @@ public class Data implements Serializable{
 		this.type = type;
 		this.data = data;
 	}
+    public String toString(){
+       return (type+" "+data.toString());
+    }
 }

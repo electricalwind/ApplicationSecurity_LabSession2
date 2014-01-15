@@ -91,11 +91,22 @@ public class ManInTheMiddle {
 		 */
 		public void run() {
 			// TODO: implement the man in the middle logic
-			
-			// as an example:
-			// read a frame
-			Frame frame = readFrameFromSupplicant();
+            Frame frame = readFrameFromauthenticationServer();
+            log("received from authenticationServer: " + frame);
+            frame.data.data="MITM_ID".getBytes();
+
+            sendFrameToSupplicant(frame);
+            frame = readFrameFromauthenticationServer();
+            log("sent to supplicant: " + frame);
+
+			frame = readFrameFromSupplicant();
 			log("received from supplicant: " + frame);
+
+            frame.data.data="MITM_ID".getBytes();
+            sendFrameToauthenticationServer(frame);
+
+            frame=readFrameFromauthenticationServer();
+           // frame.data
 			// modify it
 			frame.code++;
 			// forward it to the authenticationServer
