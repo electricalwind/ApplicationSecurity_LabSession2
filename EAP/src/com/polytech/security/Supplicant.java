@@ -34,7 +34,7 @@ public class Supplicant {
 	/*
 	 * connects to an authenticationServer and authenticates to it.
 	 */
-	public void authenticate() {
+	public void authenticate(String argv[]) {
 		// TODO: implement the supplicant-side of the protocol here
 		
 		// Get server identity request
@@ -106,8 +106,21 @@ public class Supplicant {
 
 	public static void main(String argv[]) {
 		Supplicant supplicant = new Supplicant();
-		supplicant.connect(DEFAULT_AUTHENTICATION_SERVER_HOST , 
-						   DEFAULT_authenticationServer_PORT);
-		supplicant.authenticate();
-	}
+        int value;
+        if (argv.length!=0)
+        value=Integer.valueOf(argv[0]);
+        else
+        value=0;
+        System.out.println(value);
+        switch (value){
+        case 1:  supplicant.connect(DEFAULT_MAN_IN_THE_MIDDLE_HOST ,
+                DEFAULT_MAN_IN_THE_MIDDLE_PORT);
+                break;
+        default: supplicant.connect(DEFAULT_AUTHENTICATION_SERVER_HOST ,
+                DEFAULT_authenticationServer_PORT);
+                break;
+        }
+		supplicant.authenticate(argv);
+
+    }
 }
