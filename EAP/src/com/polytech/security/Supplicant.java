@@ -15,7 +15,7 @@ public class Supplicant {
 	private static final String DEFAULT_MAN_IN_THE_MIDDLE_HOST = "localhost";
 	private static final int DEFAULT_authenticationServer_PORT = 1080;
 	private static final int DEFAULT_MAN_IN_THE_MIDDLE_PORT = 1079;
-	
+
 	private ObjectInputStream fromServer;
 	private ObjectOutputStream toServer;
 
@@ -36,50 +36,61 @@ public class Supplicant {
 	 */
 	public void authenticate(String argv[]) {
 		// TODO: implement the supplicant-side of the protocol here
-		
+
 		// Get server identity request
 		Frame authenticationServerIDRequest = readFrame();
-		
+
 		if (authenticationServerIDRequest.code != Frame.CODE_REQUEST || authenticationServerIDRequest.data.type != Data.TYPE_IDENTITY)
 		{
 			System.err.println("Bad message");
 			System.exit(-1);
 		}
-		
+
 		System.out.println("Get authentication server id= " + authenticationServerIDRequest.data);
-			
-		
+
+
 		// Send my identity
 		Data dataIdentity = new Data(Data.TYPE_IDENTITY, "SUPPLICANT_ID".getBytes());
 		Frame dataFrame = new Frame(Frame.CODE_RESPONSE, (new Integer(2)).byteValue(), dataIdentity);
-		
+
 		sendFrame(dataFrame);
-		
+
 		// Get MD5 message request
 		Frame md5ChallengeRequest = readFrame();
-		
+
 		if (md5ChallengeRequest.code != Frame.CODE_REQUEST || md5ChallengeRequest.data.type != Data.TYPE_MD5_CHALLENGE)
 		{
 			System.err.println("Bad message");
 			System.exit(-1);
 		}
-		
+
 		Data md5challengeData = md5ChallengeRequest.data;
 		System.out.println("The challenge sent by Server : " + Arrays.toString(md5challengeData.data));
-		
+
 		// Compute Challenge MD5 and send it to AuthenticationServer
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 			byte[] md5challenge = md.digest(md5challengeData.data);
 			Data md5ChallengeRespondData = new Data(Data.TYPE_MD5_CHALLENGE, md5challenge);
 			Frame md5ChallengeRespondFrame = new Frame(Frame.CODE_RESPONSE, md5ChallengeRequest.identifier++, md5ChallengeRespondData);
-			System.out.println("Coucou");
 			sendFrame(md5ChallengeRespondFrame);
-			
+
 		} catch (NoSuchAlgorithmException e) {
 			System.err.println("Error with MD5 algorithm");
 		}
+
+		// Get EAP response
+		Frame eapResponse = readFrame();
 		
+		String response = "Server reponse: " + new String(eapResponse.data.data);
+		
+		if (eapResponse.code == Frame.CODE_SUCCESS)
+			System.out.println(response);
+		else
+			System.err.println(response);
+
+
+
 	}
 
 	private void sendFrame(Frame frame) {
@@ -106,21 +117,21 @@ public class Supplicant {
 
 	public static void main(String argv[]) {
 		Supplicant supplicant = new Supplicant();
-        int value;
-        if (argv.length!=0)
-        value=Integer.valueOf(argv[0]);
-        else
-        value=0;
-        System.out.println(value);
-        switch (value){
-        case 1:  supplicant.connect(DEFAULT_MAN_IN_THE_MIDDLE_HOST ,
-                DEFAULT_MAN_IN_THE_MIDDLE_PORT);
-                break;
-        default: supplicant.connect(DEFAULT_AUTHENTICATION_SERVER_HOST ,
-                DEFAULT_authenticationServer_PORT);
-                break;
-        }
+		int value;
+		if (argv.length!=0)
+			value=Integer.valueOf(argv[0]);
+		else
+			value=0;
+		System.out.println(value);
+		switch (value){
+		case 1:  supplicant.connect(DEFAULT_MAN_IN_THE_MIDDLE_HOST ,
+				DEFAULT_MAN_IN_THE_MIDDLE_PORT);
+		break;
+		default: supplicant.connect(DEFAULT_AUTHENTICATION_SERVER_HOST ,
+				DEFAULT_authenticationServer_PORT);
+		break;
+		}
 		supplicant.authenticate(argv);
 
-    }
+	}
 }
