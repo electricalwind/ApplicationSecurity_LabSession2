@@ -104,9 +104,18 @@ public class ManInTheMiddle {
 
             frame.data.data="MITM_ID".getBytes();
             sendFrameToauthenticationServer(frame);
+            log("sent to authenticationServer: " + frame);
 
             frame=readFrameFromauthenticationServer();
-           // frame.data
+            log("received from authenticationServer: " + frame);
+            sendFrameToSupplicant(frame);
+            log("sent to supplicant: " + frame);
+
+            frame=readFrameFromSupplicant();
+            log("received from supplicant: " + frame);
+            sendFrameToauthenticationServer(frame);
+            log("sent to authenticationServer: " + frame);
+
 			// modify it
 			frame.code++;
 			// forward it to the authenticationServer
