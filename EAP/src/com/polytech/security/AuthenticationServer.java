@@ -135,9 +135,17 @@ public class AuthenticationServer {
 					// Compare local and remote MD5 hash
 					if (Arrays.equals(localChallengeDigest, frame.data.data)){
 						System.out.println("Client authentified with EAP protocol!");
+						
+						Data dataEAPSuccess = new Data(Data.TYPE_NOTIFICATION, new String("EAP_SUCCESS").getBytes());
+						Frame frameEAPSuccess = new Frame(Frame.CODE_SUCCESS, frame.identifier++, dataEAPSuccess);
+						sendFrame(frameEAPSuccess);
 					}
 					else {
 						System.err.println("Error with MD5 challenge");
+						
+						Data dataEAPFailure = new Data(Data.TYPE_NOTIFICATION, new String("EAP_FAILURE").getBytes());
+						Frame frameEAPFailure = new Frame(Frame.CODE_FAILURE, frame.identifier++, dataEAPFailure);
+						sendFrame(frameEAPFailure);
 					}
 				} catch (NoSuchAlgorithmException e) {
 					System.err.println("Error with MD5 algorithm");
