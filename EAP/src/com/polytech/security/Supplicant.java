@@ -73,7 +73,6 @@ public class Supplicant {
 			byte[] md5challenge = md.digest(md5challengeData.data);
 			Data md5ChallengeRespondData = new Data(Data.TYPE_MD5_CHALLENGE, md5challenge);
 			Frame md5ChallengeRespondFrame = new Frame(Frame.CODE_RESPONSE, md5ChallengeRequest.identifier++, md5ChallengeRespondData);
-			System.out.println("Coucou");
 			sendFrame(md5ChallengeRespondFrame);
 			
 		} catch (NoSuchAlgorithmException e) {
