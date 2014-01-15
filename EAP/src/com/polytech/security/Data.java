@@ -28,6 +28,6 @@ public class Data implements Serializable{
 		this.data = data;
 	}
     public String toString(){
-       return (type+" "+data.toString());
+       return (type+" "+new String(data));
     }
 }

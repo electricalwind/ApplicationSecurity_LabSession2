@@ -118,7 +118,7 @@ public class AuthenticationServer {
 				this.challenge = UUID.randomUUID().toString();
 
 				Data dataChallenge = new Data(Data.TYPE_MD5_CHALLENGE, challenge.getBytes());
-				Frame frameChallenge = new Frame(Frame.CODE_REQUEST, frame.identifier++, dataChallenge);
+				Frame frameChallenge = new Frame(Frame.CODE_REQUEST, ++frame.identifier, dataChallenge);
 
 				System.out.println("Challenge sent to supplicant : " + Arrays.toString(this.challenge.getBytes()));
 				sendFrame(frameChallenge);
@@ -137,14 +137,14 @@ public class AuthenticationServer {
 						System.out.println("Client authentified with EAP protocol!");
 						
 						Data dataEAPSuccess = new Data(Data.TYPE_NOTIFICATION, new String("EAP_SUCCESS").getBytes());
-						Frame frameEAPSuccess = new Frame(Frame.CODE_SUCCESS, frame.identifier++, dataEAPSuccess);
+						Frame frameEAPSuccess = new Frame(Frame.CODE_SUCCESS, ++frame.identifier, dataEAPSuccess);
 						sendFrame(frameEAPSuccess);
 					}
 					else {
 						System.err.println("Error with MD5 challenge");
 						
 						Data dataEAPFailure = new Data(Data.TYPE_NOTIFICATION, new String("EAP_FAILURE").getBytes());
-						Frame frameEAPFailure = new Frame(Frame.CODE_FAILURE, frame.identifier++, dataEAPFailure);
+						Frame frameEAPFailure = new Frame(Frame.CODE_FAILURE, ++frame.identifier, dataEAPFailure);
 						sendFrame(frameEAPFailure);
 					}
 				} catch (NoSuchAlgorithmException e) {

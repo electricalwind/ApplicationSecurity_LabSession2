@@ -92,11 +92,11 @@ public class ManInTheMiddle {
 		public void run() {
 			// TODO: implement the man in the middle logic
             Frame frame = readFrameFromauthenticationServer();
+            //frame = readFrameFromauthenticationServer();
             log("received from authenticationServer: " + frame);
             frame.data.data="MITM_ID".getBytes();
 
             sendFrameToSupplicant(frame);
-            frame = readFrameFromauthenticationServer();
             log("sent to supplicant: " + frame);
 
 			frame = readFrameFromSupplicant();
@@ -116,7 +116,12 @@ public class ManInTheMiddle {
             sendFrameToauthenticationServer(frame);
             log("sent to authenticationServer: " + frame);
 
-			// modify it
+            frame=readFrameFromauthenticationServer();
+            log("received from authenticationServer: " + frame);
+            sendFrameToSupplicant(frame);
+            log("sent to supplicant: " + frame);
+
+			/** modify it
 			frame.code++;
 			// forward it to the authenticationServer
 			sendFrameToauthenticationServer(frame);
@@ -128,7 +133,7 @@ public class ManInTheMiddle {
 			frame.length++;
 			// send it back to supplicant
 			sendFrameToSupplicant(frame);
-			log("sent to supplicant: " + frame);
+			log("sent to supplicant: " + frame);  */
 		}
 
 		/*
