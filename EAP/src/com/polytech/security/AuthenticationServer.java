@@ -5,8 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -23,8 +23,9 @@ public class AuthenticationServer {
 	 * Starts the authenticationServer: open a server socket and launch a thread that
 	 * will handle the requests when a connexion is received.
 	 */
-	public static void main(String args[]) {
+	public static void main(String argv[]) {
 		ServerSocket ss;
+        int mode=0;
 		try {
 			ss = new ServerSocket(AUTHENTICATION_SERVER_PORT);
 		} catch (IOException iox) {
@@ -37,7 +38,24 @@ public class AuthenticationServer {
 			try {
 				s = ss.accept();
 				log("connection from" + s.getInetAddress());
-				SupplicantHandler handler = new SupplicantHandler(s);
+                if (argv.length!=2){
+                    System.out.println("You didn't give the right number of parameter to the program (2)");
+                    System.out.println("First you must indicate the path to your JKS session");
+                    System.out.println("Then you enter the mode of Authentification you want to test");
+                    System.out.println("Either 0 for MD5 or 1 for TLS");
+                    System.exit(0);
+                }else {
+
+                mode=Integer.parseInt(argv[1]);
+                    if(mode==1)
+                        System.out.println("You choose TLS Authentification");
+                    else
+                        System.out.println("You choose MD5 Authentification");
+                }
+
+
+
+				SupplicantHandler handler = new SupplicantHandler(s,mode,argv[0]);
 				new Thread(handler).start();
 			} catch (IOException iox) {
 				iox.printStackTrace();
@@ -55,10 +73,15 @@ public class AuthenticationServer {
 		private ObjectOutputStream toClient;
 		private ObjectInputStream fromClient;
 		private String challenge;
+        private int mode;
+        private String path;
+        private String identity;
 
-		private SupplicantHandler(Socket socket) throws IOException {
+		private SupplicantHandler(Socket socket,int mode,String path) throws IOException {
 			fromClient = new ObjectInputStream(socket.getInputStream());
 			toClient = new ObjectOutputStream(socket.getOutputStream());
+            this.mode=mode;
+            this.path=path;
 		}
 
 		/*
@@ -67,7 +90,7 @@ public class AuthenticationServer {
 		 */
 		public void run() {
 
-			Data data = new Data(Data.TYPE_IDENTITY, "AUTHENTIFICATION_SERVER_ID".getBytes());
+			Data data = new Data(Data.TYPE_IDENTITY, "serveur".getBytes());
 			Frame frame = new Frame(Frame.CODE_REQUEST, (new Integer(1)).byteValue(), data);
 			sendFrame(frame);
 
@@ -105,19 +128,28 @@ public class AuthenticationServer {
 		 * handles a frame received from the supplicant.
 		 */
 		private void handleFrame(Frame frame) {
-			//TODO implement the protocol logic.
+            Data dataChallenge;
 
-
+            //if the server receive a response to his identity request
 			if (frame.code == Frame.CODE_RESPONSE && frame.data.type == Data.TYPE_IDENTITY)
 			{	
 
 				System.out.println("Supplicant identified");
 
+                //save the identity
+                this.identity=new String(frame.data.data);
 
-				// Send challenge to supplicant
+				// Generate challenge to supplicant
 				this.challenge = UUID.randomUUID().toString();
 
-				Data dataChallenge = new Data(Data.TYPE_MD5_CHALLENGE, challenge.getBytes());
+                //if EAP-MD5 Authentification
+                if (mode==0)
+				dataChallenge = new Data(Data.TYPE_MD5_CHALLENGE, challenge.getBytes());
+                else
+                //if EAP_TLS Authentification
+                dataChallenge = new Data(Data.TYPE_TLS_CHALLENGE, challenge.getBytes());
+
+                //Send Frame
 				Frame frameChallenge = new Frame(Frame.CODE_REQUEST, ++frame.identifier, dataChallenge);
 
 				System.out.println("Challenge sent to supplicant : " + Arrays.toString(this.challenge.getBytes()));
@@ -125,21 +157,33 @@ public class AuthenticationServer {
 			}
 			
 			// Get response to challenge
-			if (frame.code == Frame.CODE_RESPONSE && frame.data.type == Data.TYPE_MD5_CHALLENGE)
+			if (frame.code == Frame.CODE_RESPONSE && (frame.data.type == Data.TYPE_MD5_CHALLENGE ||frame.data.type == Data.TYPE_TLS_CHALLENGE))
 			{
-				MessageDigest md;
+
+                boolean ok=false;
 				try {
-					md = MessageDigest.getInstance("MD5");
-					byte[] localChallengeDigest = md.digest(this.challenge.getBytes());
-					
-					// Compare local and remote MD5 hash
-					if (Arrays.equals(localChallengeDigest, frame.data.data)){
+
+                    //if response to a MD5-Challenge
+                    if (frame.data.type==Data.TYPE_MD5_CHALLENGE) {
+                        MessageDigest md = MessageDigest.getInstance("MD5");
+                        byte[] localChallengeDigest = md.digest(this.challenge.getBytes());
+                        // Compare local and remote MD5 hash
+                        ok= Arrays.equals(localChallengeDigest, frame.data.data);
+                    }
+                    //if response to a TLS-Challenge
+                    else
+                     //verify sign
+                     ok=KeyStoreEAP.verifySign(this.path,this.identity,frame.data.data,this.challenge.getBytes());
+
+                    //if AUthentification Success
+					if (ok){
 						System.out.println("Client authentified with EAP protocol!");
 						
 						Data dataEAPSuccess = new Data(Data.TYPE_NOTIFICATION, new String("EAP_SUCCESS").getBytes());
 						Frame frameEAPSuccess = new Frame(Frame.CODE_SUCCESS, ++frame.identifier, dataEAPSuccess);
 						sendFrame(frameEAPSuccess);
 					}
+                    //if error
 					else {
 						System.err.println("Error with MD5 challenge");
 						
@@ -155,16 +199,10 @@ public class AuthenticationServer {
 
 			}
 
-
-
-			// If your code gets too long, feel free to create a "FrameHandler" class  
-			// You can use the provided "sendFrame" method to send a frame to the client.
-
-			// as an example, here we inc the frame's identifier,
-			// and we send it back
-
 		}
 	}
+
+
 
 	static void log(String s) {
 		System.out.println(s);

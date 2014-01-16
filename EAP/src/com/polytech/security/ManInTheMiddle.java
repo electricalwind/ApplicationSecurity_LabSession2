@@ -9,12 +9,6 @@ import java.net.UnknownHostException;
 
 public class ManInTheMiddle {
 
-	// create a request identity
-	// create a fake identity response
-	// create a fake request MD5 challenge
-	// create a fake MD5 challenge response
-	// create a fake success frame
-
 	private static final int MAN_IN_THE_MIDDLE_PORT = 1079;
 	private static final String DEFAULT_AUTHENTICATION_SERVER_HOST = "localhost";
 	private static final int DEFAULT_AUTHENTICATION_SERVER_PORT = 1080;
@@ -92,9 +86,8 @@ public class ManInTheMiddle {
 		public void run() {
 			// TODO: implement the man in the middle logic
             Frame frame = readFrameFromauthenticationServer();
-            //frame = readFrameFromauthenticationServer();
             log("received from authenticationServer: " + frame);
-            frame.data.data="MITM_ID".getBytes();
+            frame.data.data="MITM".getBytes();
 
             sendFrameToSupplicant(frame);
             log("sent to supplicant: " + frame);
@@ -120,20 +113,6 @@ public class ManInTheMiddle {
             log("received from authenticationServer: " + frame);
             sendFrameToSupplicant(frame);
             log("sent to supplicant: " + frame);
-
-			/** modify it
-			frame.code++;
-			// forward it to the authenticationServer
-			sendFrameToauthenticationServer(frame);
-			log("sent to authenticationServer: " + frame);
-			// read answer from authenticationServer
-			frame = readFrameFromauthenticationServer();
-			log("received from authenticationServer: " + frame);
-			// modify the answer
-			frame.length++;
-			// send it back to supplicant
-			sendFrameToSupplicant(frame);
-			log("sent to supplicant: " + frame);  */
 		}
 
 		/*
